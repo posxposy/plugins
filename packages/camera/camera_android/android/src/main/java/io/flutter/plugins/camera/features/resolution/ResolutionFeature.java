@@ -276,27 +276,10 @@ public class ResolutionFeature extends CameraFeature<ResolutionPreset> {
 
 
 class CamcorderProfileOverride {
-  private static final int QUALITY_LIST_START = CamcorderProfile.QUALITY_LOW;
-  private static final int QUALITY_LIST_END = CamcorderProfile.QUALITY_8KUHD;
-  private static final int QUALITY_TIME_LAPSE_LIST_START = CamcorderProfile.QUALITY_TIME_LAPSE_LOW;
-  private static final int QUALITY_TIME_LAPSE_LIST_END = CamcorderProfile.QUALITY_TIME_LAPSE_8KUHD;
-  private static final int QUALITY_HIGH_SPEED_LIST_START = CamcorderProfile.QUALITY_HIGH_SPEED_LOW;
-  private static final int QUALITY_HIGH_SPEED_LIST_END = CamcorderProfile.QUALITY_HIGH_SPEED_4KDCI;
-
   public static EncoderProfiles getAll(String cameraId, int quality) {
     final EncoderProfiles profiles = CamcorderProfile.getAll(cameraId, quality);
     if (profiles == null) {
       //Try to force advanced == false
-      if (!((quality >= QUALITY_LIST_START &&
-              quality <= QUALITY_LIST_END) ||
-              (quality >= QUALITY_TIME_LAPSE_LIST_START &&
-                      quality <= QUALITY_TIME_LAPSE_LIST_END) ||
-              (quality >= QUALITY_HIGH_SPEED_LIST_START &&
-                      quality <= QUALITY_HIGH_SPEED_LIST_END))) {
-        String errMessage = "Unsupported quality level: " + quality;
-        throw new IllegalArgumentException(errMessage);
-      }
-
       int id;
       try {
         id = Integer.valueOf(cameraId);
