@@ -197,31 +197,31 @@ public class ResolutionFeature extends CameraFeature<ResolutionPreset> {
         // All of these cases deliberately fall through to get the best available profile.
       case max:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_HIGH)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_HIGH);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_HIGH);
         }
       case ultraHigh:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_2160P)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_2160P);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_2160P);
         }
       case veryHigh:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_1080P)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_1080P);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_1080P);
         }
       case high:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_720P)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_720P);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_720P);
         }
       case medium:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_480P)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_480P);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_480P);
         }
       case low:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_QVGA)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_QVGA);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_QVGA);
         }
       default:
         if (CamcorderProfile.hasProfile(cameraId, CamcorderProfile.QUALITY_LOW)) {
-          return CamcorderProfile.getAll(cameraIdString, CamcorderProfile.QUALITY_LOW);
+          return CamcorderProfileOverride.getAll(cameraIdString, CamcorderProfile.QUALITY_LOW);
         }
 
         throw new IllegalArgumentException(
@@ -253,4 +253,42 @@ public class ResolutionFeature extends CameraFeature<ResolutionPreset> {
 
     previewSize = computeBestPreviewSize(cameraId, resolutionPreset);
   }
+}
+
+
+class CamcorderProfileOverride {
+  private static final int QUALITY_LIST_START = CamcorderProfile.QUALITY_LOW;
+  private static final int QUALITY_LIST_END = CamcorderProfile.QUALITY_8KUHD;
+  private static final int QUALITY_TIME_LAPSE_LIST_START = CamcorderProfile.QUALITY_TIME_LAPSE_LOW;
+  private static final int QUALITY_TIME_LAPSE_LIST_END = CamcorderProfile.QUALITY_TIME_LAPSE_8KUHD;
+  private static final int QUALITY_HIGH_SPEED_LIST_START = CamcorderProfile.QUALITY_HIGH_SPEED_LOW;
+  private static final int QUALITY_HIGH_SPEED_LIST_END = CamcorderProfile.QUALITY_HIGH_SPEED_4KDCI;
+
+  public static EncoderProfiles getAll(String cameraId, int quality) {
+    final EncoderProfiles profiles = CamcorderProfile.getAll(cameraId, quality);
+    if (profiles == null) {
+      //Try to force advanced == false
+      if (!((quality >= QUALITY_LIST_START &&
+              quality <= QUALITY_LIST_END) ||
+              (quality >= QUALITY_TIME_LAPSE_LIST_START &&
+                      quality <= QUALITY_TIME_LAPSE_LIST_END) ||
+              (quality >= QUALITY_HIGH_SPEED_LIST_START &&
+                      quality <= QUALITY_HIGH_SPEED_LIST_END))) {
+        String errMessage = "Unsupported quality level: " + quality;
+        throw new IllegalArgumentException(errMessage);
+      }
+
+      int id;
+      try {
+        id = Integer.valueOf(cameraId);
+      } catch (NumberFormatException e) {
+        return null;
+      }
+      return native_get_camcorder_profiles(id, quality, false);
+    }
+    return profiles;
+  }
+
+  private static native final EncoderProfiles native_get_camcorder_profiles(
+          int cameraId, int quality, boolean advanced);
 }
