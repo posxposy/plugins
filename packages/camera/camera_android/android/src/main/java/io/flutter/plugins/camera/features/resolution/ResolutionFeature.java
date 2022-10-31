@@ -118,8 +118,16 @@ public class ResolutionFeature extends CameraFeature<ResolutionPreset> {
       EncoderProfiles profile =
           getBestAvailableCamcorderProfileForResolutionPreset(cameraId, preset);
       List<EncoderProfiles.VideoProfile> videoProfiles = profile.getVideoProfiles();
-      EncoderProfiles.VideoProfile defaultVideoProfile = videoProfiles.get(0);
 
+      if (videoProfiles == null || videoProfiles.isEmpty()) {
+        //Fallback to legacy
+        @SuppressWarnings("deprecation")
+        CamcorderProfile legacyProfile =
+                getBestAvailableCamcorderProfileForResolutionPresetLegacy(cameraId, preset);
+        return new Size(legacyProfile.videoFrameWidth, legacyProfile.videoFrameHeight);
+      }
+
+      EncoderProfiles.VideoProfile defaultVideoProfile = videoProfiles.get(0);
       return new Size(defaultVideoProfile.getWidth(), defaultVideoProfile.getHeight());
     } else {
       @SuppressWarnings("deprecation")
@@ -239,6 +247,17 @@ public class ResolutionFeature extends CameraFeature<ResolutionPreset> {
       recordingProfile =
           getBestAvailableCamcorderProfileForResolutionPreset(cameraId, resolutionPreset);
       List<EncoderProfiles.VideoProfile> videoProfiles = recordingProfile.getVideoProfiles();
+
+      if (videoProfiles == null || videoProfiles.isEmpty()) {
+        //Fallback to legacy
+        recordingProfile = null;
+        @SuppressWarnings("deprecation")
+        CamcorderProfile camcorderProfile =
+            getBestAvailableCamcorderProfileForResolutionPresetLegacy(cameraId, resolutionPreset);
+        recordingProfileLegacy = camcorderProfile;
+        captureSize =
+            new Size(recordingProfileLegacy.videoFrameWidth, recordingProfileLegacy.videoFrameHeight);
+      }
 
       EncoderProfiles.VideoProfile defaultVideoProfile = videoProfiles.get(0);
       captureSize = new Size(defaultVideoProfile.getWidth(), defaultVideoProfile.getHeight());
